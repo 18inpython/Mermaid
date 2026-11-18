@@ -1,0 +1,35 @@
+T: Registration Workflow) --> Input[/INPUT: Licenses Held, Approved for Registration, Role, Office Locations, Client Locations/]
+    Input --> Approved{Approved for Registration == True?}
+    
+    Approved -->|FALSE| Hold[Hold: Do Not Submit Form U4] --> EndNode(END)
+    Approved -->|TRUE| S65{Licenses == Series 65 ONLY or CFP/CFA/ChFC/CIC/PFS Waiver?}
+    
+    S65 -->|TRUE| RegIAR[Register as IAR or RA ONLY under CFP CRD 175112]
+    S65 -->|FALSE| DualCheck{Dual-Registering AND Holds Series 66 AND Series 7?}
+    
+    DualCheck -->|TRUE| RegDual[Dual-Register RA + AG/GS under CFP CRD 175112 AND CFS CRD 126291]
+    DualCheck -->|FALSE| MissingQual{Missing qualifications, open exam window} --> EndNode
+
+    RegIAR --> IAR_Single
+    RegDual --> IAR_Single
+    RegDual --> BD_Trade
+
+    subgraph SEC-Registered IAR State Registration - CFP CRD 175112
+        IAR_Single{Solicits clients in ONLY home state?}
+        IAR_Single -->|TRUE| IAR_Home[File Form U4 - RA in Home State ONLY under CFP CRD 175112]
+        IAR_Single -->|FALSE| IAR_Office{Has Physical Place of Business in Target State?}
+        IAR_Office -->|TRUE| IAR_Target[File Form U4 - RA in Target State under CFP CRD 175112]
+        IAR_Office -->|FALSE| IAR_Exempt[Federal Covered Exemption: No State IAR Filing Required]
+    end
+
+    subgraph BD Agent State Registration - CFS CRD 126291
+        BD_Trade{Will Solicit, Sell, or Transact Securities for ANY Client in Target State?}
+        BD_Trade -->|TRUE| BD_Reg[File Form U4 - AG in Target State under CFS CRD 126291 + Pay Fee]
+        BD_Trade -->|FALSE| BD_No[No BD Agent State Registration Required in Target State]
+    end
+
+    IAR_Home --> EndNode
+    IAR_Target --> EndNode
+    IAR_Exempt --> EndNode
+    BD_Reg --> EndNode
+    BD_No --> EndNode
